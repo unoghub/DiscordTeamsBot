@@ -8,6 +8,7 @@ import discord.ext.commands
 
 BOT_TOKEN = 
 COMMAND_CHANNEL_ID = 
+ORGANIZER_ROLE_ID = 
 TEAM_NAME_PREFIX = 'Team '
 
 client = discord.ext.commands.Bot(command_prefix='!', intents=discord.Intents.all())
@@ -16,6 +17,7 @@ def build_category_name(team_name):
 	return f"🧩 {team_name}"
 
 async def create_team(guild, team_name, owner):
+	organizer_role = guild.get_role(int(ORGANIZER_ROLE_ID))
 	role = await guild.create_role(
 		name=team_name,
 		permissions=discord.Permissions(),
@@ -24,26 +26,22 @@ async def create_team(guild, team_name, owner):
 		mentionable=True,
 		reason=f"Create team command by {owner}"
 	)
+
 	category_permissions = {
-		guild.default_role: discord.PermissionOverwrite.from_pair(
-			discord.Permissions( # allow
-			),
-			discord.Permissions( # deny
-			)
-		),
 		role: discord.PermissionOverwrite.from_pair(
-			discord.Permissions( # allow
-				manage_permissions=True,
-				connect=True,
-				read_messages=True,
-				send_messages=True,
-				speak=True,
-			),
-			discord.Permissions( # deny
-				manage_channels=True,
-			)
+			discord.Permissions.all_channel(), # allow
+			discord.Permissions() # deny
+		),
+		organizer_role: discord.PermissionOverwrite.from_pair(
+			discord.Permissions.all_channel(), # allow
+			discord.Permissions() # deny
+		),
+		guild.default_role: discord.PermissionOverwrite.from_pair(
+			discord.Permissions(), # allow
+			discord.Permissions(view_channel=True) # deny
 		)
 	}
+
 	category = await guild.create_category(
 		name=build_category_name(team_name),
 		overwrites=category_permissions,
@@ -52,7 +50,6 @@ async def create_team(guild, team_name, owner):
 	await guild.create_text_channel(
 		name=team_name,
 		category=category,
-		overwrites=category_permissions,
 		reason="Team creation"
 	)
 	await guild.create_voice_channel(
@@ -178,7 +175,7 @@ async def add_to_team_cmd(context):
 		existing_team = get_team_of(member)
 
 		if existing_team is None:
-			await member.add_roles(team, reason=f"Added by {context.message.author}")
+			await member.add_roles(target_team, reason=f"Added by {context.message.author}")
 			await _respond(f"{member.name} was added to {target_team.name}")
 		else:
 			await _respond(f"{member.name} is already in {existing_team.name}")
