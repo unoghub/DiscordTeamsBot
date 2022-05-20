@@ -7,10 +7,74 @@ import discord
 import discord.ext.commands
 
 BOT_TOKEN = 
+COMMAND_CHANNEL_ID = 
 TEAM_NAME_PREFIX = 'Team '
-TEAM_ROLE_COLOR = discord.Colour.dark_blue()
 
 client = discord.ext.commands.Bot(command_prefix='!', intents=discord.Intents.all())
+
+def build_category_name(team_name):
+	return f"🧩 {team_name}"
+
+async def create_team(guild, team_name, owner):
+	role = await guild.create_role(
+		name=team_name,
+		permissions=discord.Permissions(),
+		colour=discord.Colour.dark_blue(),
+		hoist=True,
+		mentionable=True,
+		reason=f"Create team command by {owner}"
+	)
+	category_permissions = {
+		guild.default_role: discord.PermissionOverwrite.from_pair(
+			discord.Permissions( # allow
+			),
+			discord.Permissions( # deny
+			)
+		),
+		role: discord.PermissionOverwrite.from_pair(
+			discord.Permissions( # allow
+				manage_permissions=True,
+				connect=True,
+				read_messages=True,
+				send_messages=True,
+				speak=True,
+			),
+			discord.Permissions( # deny
+				manage_channels=True,
+			)
+		)
+	}
+	category = await guild.create_category(
+		name=build_category_name(team_name),
+		overwrites=category_permissions,
+		reason="Team creation"
+	)
+	await guild.create_text_channel(
+		name=team_name,
+		category=category,
+		overwrites=category_permissions,
+		reason="Team creation"
+	)
+	await guild.create_voice_channel(
+		name=team_name,
+		category=category,
+		reason="Team creation"
+	)
+	await owner.add_roles(role, reason="Create team command")
+
+async def delete_team(team):
+	team_category = None
+	for category in team.guild.categories:
+		if category.name == build_category_name(team.name):
+			team_category = category
+			break
+
+	if team_category is not None:
+		for channel in team_category.channels:
+			await channel.delete()
+		await team_category.delete()
+
+	await team.delete(reason=f"Empty team")
 
 def get_team_of(member):
 	for role in member.roles:
@@ -21,6 +85,12 @@ def get_team_of(member):
 
 def team_exists(guild, name):
 	return any([role.name == name for role in guild.roles])
+
+async def check_command_context(context):
+	if str(context.channel.id) != COMMAND_CHANNEL_ID:
+		await respond(context.channel, context.author, "I do not respond to messages on this channel")
+		return False
+	return True
 
 def ignore_context(context):
 	return context.guild is None
@@ -48,9 +118,12 @@ async def status(context):
 		await respond(context.channel, context.message.author, status)
 
 @client.command('create')
-async def create_team(context):
+async def create_team_cmd(context):
 	async def _respond(msg):
 		await respond(context.channel, context.message.author, msg)
+
+	if not await check_command_context(context):
+		return
 
 	if ignore_context(context):
 		return
@@ -75,23 +148,16 @@ async def create_team(context):
 		await _respond(f"Team {name} already exists!")
 		return
 
-	logger.info("Creating team \"%s\" for %s", name, owner)
-
-	role = await context.guild.create_role(
-		name=team_name,
-		permissions=discord.Permissions(),
-		colour=TEAM_ROLE_COLOR,
-		hoist=True,
-		mentionable=True,
-		reason=f"Create team command by {owner}"
-	)
-	await owner.add_roles(role, reason="Create team command")
+	await create_team(context.guild, team_name, owner)
 	await _respond(f"Team {name} created!")
 
 @client.command('add')
-async def add_to_team(context):
+async def add_to_team_cmd(context):
 	async def _respond(msg):
 		await respond(context.channel, context.message.author, msg)
+
+	if not await check_command_context(context):
+		return
 
 	if ignore_context(context):
 		return
@@ -118,9 +184,12 @@ async def add_to_team(context):
 			await _respond(f"{member.name} is already in {existing_team.name}")
 
 @client.command('leave')
-async def leave_team(context):
+async def leave_team_cmd(context):
 	async def _respond(msg):
 		await respond(context.channel, context.message.author, msg)
+
+	if not await check_command_context(context):
+		return
 
 	user = context.message.author
 	team = get_team_of(user)
@@ -134,6 +203,6 @@ async def leave_team(context):
 
 	if len(team.members) == 0:
 		await context.channel.send(f"Removing empty team {team.name}")
-		await team.delete(reason=f"Empty team")
+		await delete_team(team)
 
 client.run(BOT_TOKEN)
