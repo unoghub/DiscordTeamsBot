@@ -6,9 +6,9 @@ logger = logging.getLogger('bot')
 import discord
 import discord.ext.commands
 
-BOT_TOKEN = 
-COMMAND_CHANNEL_ID = 
-ORGANIZER_ROLE_ID = 
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+COMMAND_CHANNEL_ID = os.getenv('COMMAND_CHANNEL_ID')
+ORGANIZER_ROLE_ID = os.getenv('ORGANIZER_ROLE_ID')
 TEAM_NAME_PREFIX = 'Team '
 
 client = discord.ext.commands.Bot(command_prefix='!', intents=discord.Intents.all())
