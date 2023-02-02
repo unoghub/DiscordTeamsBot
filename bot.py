@@ -9,7 +9,7 @@ logger = logging.getLogger('bot')
 BOT_TOKEN = ''
 COMMAND_CHANNEL_ID = ''
 JAMMER_ROLE_ID = ''
-ADMIN_ROLE_ID = 
+ADMIN_ROLE_ID =
 TEAM_NAME_PREFIX = 'Team '
 
 client = discord.ext.commands.Bot(
@@ -78,8 +78,6 @@ async def delete_team(team, channel):
 
     await team.delete(reason=f"Empty team")
     await channel.send(f"{team.name} deleted successfully.")
-
-# Birden fazla takımı olanlarda doğru çalışmıyor
 
 
 def get_teams_of(member):
@@ -155,7 +153,7 @@ async def create_team_cmd(context):
 
     if ignore_context(context):
         return
-    
+
     owner = context.message.author
 
     if len(get_teams_of(owner)) >= 5:
@@ -172,10 +170,6 @@ async def create_team_cmd(context):
         name = msg_split[1]
 
     team_name = TEAM_NAME_PREFIX + name
-
-    # if get_teams_of(owner) is not None:
-    # 	await _respond("You are already in a team")
-    # 	return
 
     if team_exists(context.guild, team_name):
         await _respond(f"Team {name} already exists!")
@@ -201,7 +195,7 @@ async def add_to_team_cmd(context):
     if teams is []:
         await _respond("You are not in a team")
         return
-    
+
     members = context.message.mentions
 
     if len(members) == 0:
@@ -219,7 +213,7 @@ async def add_to_team_cmd(context):
         team_list = ''
 
         for team in teams:
-            team_list += 'Index of ' + team.name + ': `'+ str(index) + '`\n'
+            team_list += 'Index of ' + team.name + ': `' + str(index) + '`\n'
             index += 1
 
         if len(msg_split) == 2:
@@ -275,7 +269,7 @@ async def leave_team_cmd(context):
         team_list = ''
 
         for team in teams:
-            team_list += 'Index of ' + team.name + ': `'+ str(index) + '`\n'
+            team_list += 'Index of ' + team.name + ': `' + str(index) + '`\n'
             index += 1
 
         if len(msg_split) == 1:
