@@ -9,7 +9,7 @@ logger = logging.getLogger('bot')
 BOT_TOKEN = ''
 COMMAND_CHANNEL_ID = ''
 JAMMER_ROLE_ID = ''
-ADMIN_ROLE_ID =
+ADMIN_ROLE_ID = 
 TEAM_NAME_PREFIX = 'Ekip '
 
 client = discord.ext.commands.Bot(
@@ -304,7 +304,7 @@ async def delete_team_cmd(context):
     teams = context.message.role_mentions
 
     if len(teams) == 0:
-        await _respond('Herhangi bir ekip etiketlenmedi! Sözdimizi: `!sil @<ekip_rolü>`')
+        await _respond('Herhangi bir ekip etiketlenmedi! Sözdizimi: `!sil @<ekip_rolü>`')
         return
 
     team = teams[0]
@@ -317,7 +317,7 @@ async def delete_team_cmd(context):
     await delete_team(team, context.channel)
 
 
-@client.command('benim_de_dahil_olduğum_bütün_ekipleri_imha_et')
+@client.command('benim_mensubu_olduklarım_da_dahil_bütün_ekipleri_imha_et')
 async def delete_team_all_cmd(context):
     async def _respond(msg):
         await respond(context.channel, context.message.author, msg)
