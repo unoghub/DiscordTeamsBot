@@ -10,7 +10,7 @@ BOT_TOKEN = ''
 COMMAND_CHANNEL_ID = ''
 JAMMER_ROLE_ID = ''
 ADMIN_ROLE_ID =
-TEAM_NAME_PREFIX = 'Team '
+TEAM_NAME_PREFIX = 'Ekip '
 
 client = discord.ext.commands.Bot(
     command_prefix='!', intents=discord.Intents.all())
@@ -77,7 +77,7 @@ async def delete_team(team, channel):
         await team_category.delete()
 
     await team.delete(reason=f"Empty team")
-    await channel.send(f"{team.name} deleted successfully.")
+    await channel.send(f"{team.name} başarıyla silindi.")
 
 
 def get_teams_of(member):
@@ -103,7 +103,7 @@ def team_exists(guild, name):
 
 async def check_command_context(context):
     if str(context.channel.id) != COMMAND_CHANNEL_ID:
-        await respond(context.channel, context.author, "I do not respond to messages on this channel")
+        await respond(context.channel, context.author, f"Lütfen <#{COMMAND_CHANNEL_ID}> kanalı üzerinden komut veriniz.")
         return False
     return True
 
@@ -126,7 +126,7 @@ async def on_ready():
     logger.info("Logged in as %s (%s)", client.user.name, client.user.id)
 
 
-@client.command('status')
+@client.command('durum')
 async def status(context):
     if ignore_context(context):
         return
@@ -139,11 +139,11 @@ async def status(context):
     for member in members:
         teams = get_teams_of(member)
 
-        status = f"Jammer {member.name}'s teams: {'(none)' if teams is [] else ', '.join([team.name for team in teams])}"
+        status = f"Bulunduğunuz ekipler: {'(yok)' if teams is [] else ', '.join([team.name for team in teams])}"
         await respond(context.channel, context.message.author, status)
 
 
-@client.command('create')
+@client.command('oluştur')
 async def create_team_cmd(context):
     async def _respond(msg):
         await respond(context.channel, context.message.author, msg)
@@ -157,14 +157,14 @@ async def create_team_cmd(context):
     owner = context.message.author
 
     if len(get_teams_of(owner)) >= 5:
-        await _respond("You have exceeded the maximum team count!")
+        await _respond("Azami ekip sayısına ulaştınız!")
         return
 
     msg = context.message.clean_content
     msg_split = msg.split(maxsplit=1)
 
     if len(msg_split) == 1:
-        await _respond("Syntax: `!create <team_name>`")
+        await _respond("Sözdizimi: `!oluştur <ekip_adı>`")
         return
     else:
         name = msg_split[1]
@@ -172,14 +172,14 @@ async def create_team_cmd(context):
     team_name = TEAM_NAME_PREFIX + name
 
     if team_exists(context.guild, team_name):
-        await _respond(f"Team {name} already exists!")
+        await _respond(f"Halihazırda {name} adında bir ekip bulunmakta!")
         return
 
     await create_team(context.guild, team_name, owner)
-    await _respond(f"Team {name} created!")
+    await _respond(f"Ekip {name} oluşturuldu!")
 
 
-@client.command('add')
+@client.command('ekle')
 async def add_to_team_cmd(context):
     async def _respond(msg):
         await respond(context.channel, context.message.author, msg)
@@ -193,13 +193,13 @@ async def add_to_team_cmd(context):
     teams = get_teams_of(context.message.author)
 
     if teams is []:
-        await _respond("You are not in a team")
+        await _respond("Herhangi bir ekipte değilsin!")
         return
 
     members = context.message.mentions
 
     if len(members) == 0:
-        await _respond("No member is mentioned! Syntax: `!add @<user>`")
+        await _respond("Kimseyi etiketlemedin! Sözdizimi: `!ekle @<kullanıcı>`")
         return
 
     msg = context.message.clean_content
@@ -213,17 +213,17 @@ async def add_to_team_cmd(context):
         team_list = ''
 
         for team in teams:
-            team_list += 'Index of ' + team.name + ': `' + str(index) + '`\n'
+            team_list += team.name + 'ekibinin indeksi: `' + str(index) + '`\n'
             index += 1
 
         if len(msg_split) == 2:
-            await _respond(f"Since you're present in more than one team, please specify the team you want to add member to.\n\n{team_list}\nSyntax: `!add @<user> <team_index>`")
+            await _respond(f"Birden fazla ekibe dahil olduğunuz için eklemek istediğiniz ekibi belirtiniz.\n\n{team_list}\nSözdizimi: `!ekle @<kullanıcı> <ekip_indeksi>`")
             return
         else:
             if msg_split[2].isnumeric() and int(msg_split[2]) < index:
                 specified_index = int(msg_split[2])
             else:
-                await _respond(f"Invalid index, please specify a valid team index.\n\n{team_list}\nSyntax: `!add @<user> <team_index>`")
+                await _respond(f"Geçersiz indeks, lütfen uygun bir ekip indeksi belirtiniz.\n\n{team_list}\Sözdizimi: `!ekle @<kullanıcı> <ekip_indeksi>`")
                 return
 
     specified_team = teams[specified_index]
@@ -233,17 +233,17 @@ async def add_to_team_cmd(context):
 
         if existing_teams == []:
             await member.add_roles(specified_team, reason=f"Added by {context.message.author}")
-            await _respond(f"{member.name} was added to {specified_team.name}")
+            await _respond(f"{member.name}, {specified_team.name} ekibine eklendi!")
             return
         elif specified_team in existing_teams:
-            await _respond(f"{member.name} has already in {specified_team.name}")
+            await _respond(f"{member.name} zaten {specified_team.name} ekibinde mevcut.")
             return
         else:
             await member.add_roles(specified_team, reason=f"Added by {context.message.author}")
-            await _respond(f"{member.name} was added to {specified_team.name}")
+            await _respond(f"{member.name}, {specified_team.name} ekibine eklendi!")
 
 
-@client.command('leave')
+@client.command('ayrıl')
 async def leave_team_cmd(context):
     async def _respond(msg):
         await respond(context.channel, context.message.author, msg)
@@ -255,7 +255,7 @@ async def leave_team_cmd(context):
     teams = get_teams_of(user)
 
     if teams is []:
-        await _respond("You are not in a team")
+        await _respond("Herhangi bir ekipte değilsin!")
         return
 
     specified_index = 0
@@ -269,77 +269,77 @@ async def leave_team_cmd(context):
         team_list = ''
 
         for team in teams:
-            team_list += 'Index of ' + team.name + ': `' + str(index) + '`\n'
+            team_list += team.name + 'ekibinin indeksi: `' + str(index) + '`\n'
             index += 1
 
         if len(msg_split) == 1:
-            await _respond(f"Since you're present in more than one team, please specify the team you want to leave.\n\n{team_list}\nSyntax: `!leave <team_index>`")
+            await _respond(f"Birden fazla ekibe dahil olduğunuz için ayrılmak istediğiniz ekibi belirtiniz.\n\n{team_list}\nSözdizimi: `!ayrıl <ekip_indeksi>`")
             return
         else:
             if msg_split[1].isnumeric() and int(msg_split[1]) < index:
                 specified_index = int(msg_split[1])
             else:
-                await _respond(f"Invalid index, please specify a valid team index.\n\n{team_list}\nSyntax: `!leave <team_index>`")
+                await _respond(f"Geçersiz indeks, lütfen uygun bir ekip indeksi belirtiniz.\n\n{team_list}\nSözdizimi: `!ayrıl <ekip_indeksi>`")
                 return
 
     specified_team = teams[specified_index]
 
     await user.remove_roles(specified_team, reason=f"Leave command")
-    await _respond(f"You have left {specified_team.name}")
+    await _respond(f"{specified_team.name} ekibinden ayrıldınız.")
 
     if len(specified_team.members) == 0:
-        await context.channel.send(f"Deleting empty team {specified_team.name}...")
+        await context.channel.send(f"{specified_team.name} ekibinde kimse kalmadığını için siliniyor...")
         await delete_team(specified_team, context.channel)
 
 
-@client.command('delete')
+@client.command('sil')
 async def delete_team_cmd(context):
     async def _respond(msg):
         await respond(context.channel, context.message.author, msg)
 
     if not await is_admin(context):
-        await _respond('You do not have the permission to call this method!')
+        await _respond('Bu komutu çağırma yetkiniz yok!')
         return
 
     teams = context.message.role_mentions
 
     if len(teams) == 0:
-        await _respond('No team is mentioned! Syntax: `!delete_team @<team_role>`')
+        await _respond('Herhangi bir ekip etiketlenmedi! Sözdimizi: `!sil @<ekip_rolü>`')
         return
 
     team = teams[0]
 
     if not team.name.startswith(TEAM_NAME_PREFIX):
-        await _respond('Mentioned role is not a team role.')
+        await _respond('Etiketlenen rol bir ekip rolü değil!')
         return
 
-    await context.channel.send(f"Deleting the team {team.name}")
+    await context.channel.send(f"{team.name} ekibi siliniyor...")
     await delete_team(team, context.channel)
 
 
-@client.command('exterminate_all_existing_teams_including_ours_if_i_have_any')
+@client.command('benim_de_dahil_olduğum_bütün_ekipleri_imha_et')
 async def delete_team_all_cmd(context):
     async def _respond(msg):
         await respond(context.channel, context.message.author, msg)
 
     if not await is_admin(context):
-        await _respond('You do not have the permission to call this method!')
+        await _respond('Bu komutu çağırma yetkiniz yok!')
         return
 
     teams = get_all_teams(context.guild)
 
     if len(teams) == 0:
-        await context.channel.send("No teams found!")
+        await context.channel.send("Herhangi bir ekip bulunamadı!")
         return
 
-    await context.channel.send(f"{len(teams)} teams found.")
+    await context.channel.send(f"{len(teams)} ekip bulundu.")
 
     for team in teams:
-        _msg = await context.channel.send(f"Deleting the team {team.name}")
+        _msg = await context.channel.send(f"{team.name} ekibi siliniyor")
         await delete_team(team, context.channel)
         await _msg.delete()
 
-    await context.channel.send("All teams exterminated.")
+    await context.channel.send("Bütün ekipler imha edildi.")
 
 
 client.run(BOT_TOKEN)
