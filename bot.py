@@ -8,12 +8,11 @@ logger = logging.getLogger('bot')
 
 BOT_TOKEN = ''
 COMMAND_CHANNEL_ID = ''
-JAMMER_ROLE_ID = ''
 ADMIN_ROLE_ID = 
 TEAM_NAME_PREFIX = 'Ekip '
 
 client = discord.ext.commands.Bot(
-    command_prefix='!', intents=discord.Intents.all())
+    command_prefix='!', intents=discord.Intents.all(), help_command=None)
 
 
 def build_category_name(team_name):
@@ -21,7 +20,7 @@ def build_category_name(team_name):
 
 
 async def create_team(guild, team_name, owner):
-    organizer_role = guild.get_role(int(JAMMER_ROLE_ID))
+    organizer_role = guild.get_role(int(ADMIN_ROLE_ID))
     role = await guild.create_role(
         name=team_name,
         permissions=discord.Permissions(),
@@ -341,5 +340,20 @@ async def delete_team_all_cmd(context):
 
     await context.channel.send("Bütün ekipler imha edildi.")
 
+
+@client.command(aliases=['yardım', 'destek'])
+async def help(ctx):
+    embed = discord.Embed(title="Komut Listesi",
+                          color=discord.Color.dark_gold())
+    embed.add_field(
+        name="!durum", value="Hangi takımlarda bulunduğunuzu söyler.", inline=False)
+    embed.add_field(name="!oluştur <ekip_ismi>",
+                    value="Yeni bir takım oluşturmak için bir takım ismi yazarak bu komutu kullanabilirsiniz.", inline=False)
+    embed.add_field(name="!ekle <@kullanıcı>",
+                    value="Bulunduğunuz takıma arkadaşınızı eklemek için onu etiketleyerek bu komutu yazınız.", inline=False)
+    embed.add_field(
+        name="!ayrıl", value="Bulunduğunuz takımdan ayrılacak olursanız vedalaştıktan sonra kullanmanız için...", inline=False)
+    embed.set_footer(text="Eğer birden fazla takımdaysanız !ekle ve !ayrıl komutları hangi takım ile ilgili aksiyon almak istediğinizi öğrenmek adına size bir liste verip  bir numara isteyecektir,  listeden ekip numaranızı seçerek belirtilen sırada komut verirseniz sıkıntısız çalışacaktır. İyi jamler!")
+    await ctx.send(embed=embed)
 
 client.run(BOT_TOKEN)
